@@ -1,0 +1,1 @@
+- Store terraform data in a cloud (google storage)
