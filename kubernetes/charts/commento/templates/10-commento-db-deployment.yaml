@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.name }}-db
+  namespace: {{ .Chart.name }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}-db
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.name }}-db
+    spec:
+        - image: postgres:{{ .Values.postgres.tag }}
+          imagePullPolicy: Always
+          name: {{ .Chart.name }}-db
+          ports:
+            - containerPort: 5432
+              name: postgres
+          env:
+            - "POSTGRES_DB={{ .Values.postgres.db }}"
+            - "POSTGRES_USER={{ .Values.postgres.user }}"
+            - "POSTGRES_PASSWORD={{ .Values.postgres.password }}"
+          resources:
+            requests:
+              cpu: '100m'
+              memory: '100Mi'

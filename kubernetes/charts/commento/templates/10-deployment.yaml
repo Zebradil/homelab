@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.name }}-web
+  namespace: {{ .Chart.name }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}-web
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.name }}-web
+    spec:
+      containers:
+        - image: registry.gitlab.com/commento/commento:{{ .Values.tag }}
+          imagePullPolicy: Always
+          name: {{ .Chart.name }}-web
+          ports:
+            - containerPort: {{ .Values.port }}
+          env:
+            - "COMMENTO_ORIGIN=https://{{ .Values.domain }}"
+            - "COMMENTO_PORT={{ .Values.port }}"
+            - "COMMENTO_POSTGRES=postgres://{{ .Values.postgres.user }}:{{ .Values.postgres.password }}@db:5432/{{ .Values.postgres.db }}?sslmode=disable"
+            #- "COMMENTO_FORBID_NEW_OWNERS=true"
+          resources:
+            requests:
+              cpu: '100m'
+              memory: '100Mi'
