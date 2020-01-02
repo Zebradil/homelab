@@ -1,0 +1,46 @@
+version: '3.7'
+
+services:
+  netdata:
+    image: netdata/netdata
+    deploy:
+      labels:
+        - "traefik.backend=netdata"
+        - "traefik.frontend.rule=Host:netdata.${DOMAIN:?}"
+        - "traefik.tags=${TRAEFIK_PUBLIC_TAG:-traefik-public}"
+        - "traefik.port=19999"
+        - "traefik.docker.network=traefik-public"
+        - "traefik.backend.loadbalancer.method=drr"
+        - "traefik.frontend.auth.basic.users=${ADMIN_USER}:${HASHED_PASSWORD}"
+      restart_policy:
+        condition: on-failure
+    environment:
+      - DOCKER_HOST=proxy:2375
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - apparmor:unconfined
+    volumes:
+      - /etc/passwd:/host/etc/passwd:ro
+      - /etc/group:/host/etc/group:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+    networks:
+      - proxy
+      - internal
+  proxy:
+    image: tecnativa/docker-socket-proxy
+    volumes:
+     - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - CONTAINERS=1
+    networks:
+      - internal
+
+networks:
+  internal:
+    external: false
+  proxy:
+    external: true
+    name: traefik-public
+
