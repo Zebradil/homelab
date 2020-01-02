@@ -1,18 +1,33 @@
----
-version: "2"
+version: '3.7'
+
 services:
   grocy:
     image: linuxserver/grocy
-    container_name: grocy
+    deploy:
+      labels:
+        - "traefik.backend=grocy"
+        - "traefik.frontend.rule=Host:grocy.${DOMAIN:?}"
+        - "traefik.tags=${TRAEFIK_PUBLIC_TAG:-traefik-public}"
+        - "traefik.port=80"
+        - "traefik.docker.network=traefik-public"
+        - "traefik.backend.loadbalancer.method=drr"
+      restart_policy:
+        condition: on-failure
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Europe/Berlin
+      - GROCY_CULTURE=ru
     volumes:
       - grocy_config:/config
-    ports:
-      - 9283:80
-    restart: unless-stopped
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true
+    name: traefik-public
 
 volumes:
   grocy_config:
+
