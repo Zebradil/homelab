@@ -1,16 +1,39 @@
-version: '2'
+version: '3.7'
 
 services:
   portainer:
     image: portainer/portainer
-    command: -H unix:///var/run/docker.sock
-    restart: always
-    ports:
-      - 9000:9000
-      - 8000:8000
+    command: -H tcp://proxy:2375
+    deploy:
+      labels:
+        - "traefik.backend=portainer"
+        - "traefik.frontend.rule=Host:portainer.${DOMAIN:?}"
+        - "traefik.tags=${TRAEFIK_PUBLIC_TAG:-traefik-public}"
+        - "traefik.port=9000"
+        - "traefik.docker.network=traefik-public"
+        - "traefik.backend.loadbalancer.method=drr"
+      restart_policy:
+        condition: on-failure
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
+    networks:
+      - internal
+      - proxy
+  proxy:
+    image: tecnativa/docker-socket-proxy
+    volumes:
+     - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - CONTAINERS=1
+    networks:
+      - internal
+
+networks:
+  internal:
+    external: false
+  proxy:
+    external: true
+    name: traefik-public
 
 volumes:
   portainer_data:
