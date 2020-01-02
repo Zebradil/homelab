@@ -1,0 +1,33 @@
+version: '3.7'
+
+services:
+  pigallery2:
+    image: bpatrik/pigallery2:v1.8.0
+    deploy:
+      labels:
+        - "traefik.backend=pigallery2"
+        - "traefik.frontend.rule=Host:pigallery2.${DOMAIN:?}"
+        - "traefik.tags=${TRAEFIK_PUBLIC_TAG:-traefik-public}"
+        - "traefik.port=80"
+        - "traefik.docker.network=traefik-public"
+        - "traefik.backend.loadbalancer.method=drr"
+      restart_policy:
+        condition: on-failure
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - "/var/data/pigallery2/config:/app/data/config"
+      - "pigallery2_db:/app/data/db"
+      - "/var/data/pigallery2/images:/app/data/images"
+      - "/var/data/pigallery2/tmp:/app/data/tmp"
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true
+    name: traefik-public
+
+volumes:
+  pigallery2_db:
+
