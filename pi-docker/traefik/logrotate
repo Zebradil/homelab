@@ -1,0 +1,10 @@
+/var/log/traefik/access.log {
+    missingok
+    notifempty
+    daily
+    rotate 30
+    compress
+    postrotate
+      /usr/bin/kill -s USR1 $(pgrep traefik)
+    endscript
+}
