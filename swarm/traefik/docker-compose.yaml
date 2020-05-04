@@ -2,12 +2,9 @@ version: "3.7"
 
 services:
   traefik:
-    image: traefik:1.7
+    image: traefik:2.2
     command:
       - "--logLevel=WARNING"
-      - "--docker"
-      - "--docker.watch"
-      - "--docker.swarmmode"
       - "--docker.domain=${DOMAIN:?}"
       - "--acme.keytype=EC256"
       - "--acme.domains=*.${DOMAIN:?}"
@@ -22,6 +19,8 @@ services:
         protocol: tcp
         mode: host
     volumes:
+      # TODO replace direct mount by using proxy
+      # https://github.com/BretFisher/dogvscat/blob/master/stack-proxy-global.yml#L124
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "/var/data/traefik/traefik.toml:/traefik.toml:ro"
       - "/var/data/traefik/.htpasswd:/.htpasswd:ro"
@@ -36,9 +35,10 @@ services:
       restart_policy:
         condition: on-failure
       labels:
-        - "traefik.frontend.rule=Host:traefik.${DOMAIN:?}"
+        - "traefik.enable=true"
+        - "traefik.http.routers.traefik.rule=Host:traefik.${DOMAIN:?}"
+        - "traefik.http.services.traefik.loadbalancer.server.port=8080"
         - "traefik.tags=${TRAEFIK_PUBLIC_TAG:-traefik-public}"
-        - "traefik.port=8080"
         - "traefik.docker.network=traefik-public"
     secrets:
       - cloudflare-api-key

@@ -5,12 +5,12 @@ services:
     image: linuxserver/grocy
     deploy:
       labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.router0.rule=Host(grocy.${DOMAIN:?})"
         - "traefik.backend=grocy"
-        - "traefik.frontend.rule=Host:grocy.${DOMAIN:?}"
         - "traefik.tags=${TRAEFIK_PUBLIC_TAG:-traefik-public}"
         - "traefik.port=80"
         - "traefik.docker.network=traefik-public"
-        - "traefik.backend.loadbalancer.method=drr"
       restart_policy:
         condition: on-failure
     environment:
