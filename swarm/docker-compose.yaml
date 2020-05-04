@@ -1,6 +1,5 @@
 version: "3.7"
 
-########################### NETWORKS
 networks:
   proxy:
     name: traefik-public
@@ -10,18 +9,18 @@ networks:
       config:
       - subnet: 10.1.0.0/24
 
-########################### SERVICES
+secrets:
+  cloudflare-api-key:
+    external: true
+  cloudflare-api-mail:
+    external: true
+
 services:
 
 ############################# FRONTENDS
 
 # Traefik 2 - Reverse Proxy
-# Touch (create empty files) traefik.log and acme/acme.json. Set acme.json permissions to 600.
-# touch ${SWARMDIR}/traefik2/acme/acme.json
-# chmod 600 ${SWARMDIR}/traefik2/acme/acme.json
-# touch ${SWARMDIR}/traefik2/traefik.log
   traefik:
-    container_name: traefik
     image: traefik:chevrotin # the chevrotin tag refers to v2.2.x
     command: --configfile=traefik.yaml
     networks:
@@ -38,9 +37,10 @@ services:
         mode: host
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "/var/data/traefik/traefik.toml:/traefik.yaml:ro"
+      - "/var/data/traefik/traefik.yaml:/traefik.yaml:ro"
       - "/var/data/traefik/.htpasswd:/.htpasswd:ro"
-      - "/var/data/traefik/acme.json:/acme.json"
+      - "/var/data/traefik/rules/:/rules/:ro"
+      - "/var/data/traefik/acme2.json:/acme2.json"
       - "/var/log/traefik:/logs"
     secrets:
       - cloudflare-api-key
@@ -53,83 +53,84 @@ services:
       placement:
         constraints: [node.role == manager]
       restart_policy:
-        condition: unless-stopped
+        condition: on-failure
       labels:
         - "traefik.enable=true"
           # HTTP Routers
         - "traefik.http.routers.traefik-rtr.entrypoints=https"
         - "traefik.http.routers.traefik-rtr.rule=Host(`traefik.${DOMAIN:?}`)"
         - "traefik.http.routers.traefik-rtr.tls=true"
-        - "traefik.http.routers.traefik-rtr.tls.domains[0].main=${DOMAIN:?}"
-        - "traefik.http.routers.traefik-rtr.tls.domains[0].sans=*.${DOMAIN:?}"
-          ## Services - API
-        - "traefik.http.routers.traefik-rtr.service=api@internal"
+        - "traefik.http.routers.traefik-rtr.tls.certresolver=dns-cloudflare"
           ## Middlewares
         - "traefik.http.routers.traefik-rtr.middlewares=chain-oauth@file"
+          ## Services - API
+        - "traefik.http.routers.traefik-rtr.service=api@internal"
+        - "traefik.http.services.dummyPortService.loadbalancer.server.port=11111"
 
-## Google OAuth - Single Sign On using OAuth 2.0
-#  # https://hub.docker.com/r/thomseddon/traefik-forward-auth
-#  # https://www.smarthomebeginner.com/google-oauth-with-traefik-docker/
-#  oauth:
-#    container_name: oauth
-#    image: thomseddon/traefik-forward-auth:latest
-#    #image: thomseddon/traefik-forward-auth:2.1-arm # Use this image with Raspberry Pi
-#    restart: unless-stopped
-#    networks:
-#      - proxy
-#    environment:
-#      - "AUTH_HOST=oauth.${DOMAIN:?}"
-#      - "CLIENT_ID=${GOOGLE_CLIENT_ID}"
-#      - "CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}"
-#      - "COOKIE_DOMAIN=${DOMAIN:?}"
-#      - "INSECURE_COOKIE=false"
-#      - "LIFETIME=2592000" # 30 days
-#      - "LOG_FORMAT=text"
-#      - "LOG_LEVEL=info"
-#      - "SECRET=${OAUTH_SECRET}"
-#      - "URL_PATH=/_oauth"
-#      - "WHITELIST=${MY_EMAIL}"
-#    deploy:
-#      # TODO global → replicated?
-#      mode: global
-#      placement:
-#        constraints: [node.role == manager]
-#      restart_policy:
-#        condition: unless-stopped
-#      labels:
-#        - "traefik.enable=true"
-#        ## HTTP Routers
-#        - "traefik.http.routers.oauth-rtr.entrypoints=https"
-#        - "traefik.http.routers.oauth-rtr.rule=Host(`oauth.${DOMAIN:?}`)"
-#        - "traefik.http.routers.oauth-rtr.tls=true"
-#        ## Middlewares
-#        - "traefik.http.routers.oauth-rtr.middlewares=chain-oauth@file"
-#        ## HTTP Services
-#        - "traefik.http.routers.oauth-rtr.service=oauth-svc"
-#        - "traefik.http.services.oauth-svc.loadbalancer.server.port=4181"
-#
-## Portainer - WebUI for Containers
-#  portainer:
-#    container_name: portainer
-#    image: portainer/portainer:latest
-#    restart: unless-stopped
-#    command: -H unix:///var/run/docker.sock
-#    networks:
-#      - proxy
-#    volumes:
-#      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-#      - "${SWARMDIR}/portainer/data:/data" # Change to local directory if you want to save/transfer config locally
-#    environment:
-#      - TZ=${TZ}
-#    labels:
-#      - "traefik.enable=true"
-#      ## HTTP Routers
-#      - "traefik.http.routers.portainer-rtr.entrypoints=https"
-#      - "traefik.http.routers.portainer-rtr.rule=Host(`portainer.${DOMAIN:?}`)"
-#      - "traefik.http.routers.portainer-rtr.tls=true"
-#      ## Middlewares
-#      - "traefik.http.routers.portainer-rtr.middlewares=chain-oauth@file" # Google OAuth 2.0
-#      ## HTTP Services
-#      - "traefik.http.routers.portainer-rtr.service=portainer-svc"
-#      - "traefik.http.services.portainer-svc.loadbalancer.server.port=9000"
+# Google OAuth - Single Sign On using OAuth 2.0
+  # https://hub.docker.com/r/thomseddon/traefik-forward-auth
+  # https://www.smarthomebeginner.com/google-oauth-with-traefik-docker/
+  oauth:
+    image: thomseddon/traefik-forward-auth:latest
+    networks:
+      - proxy
+    environment:
+      - "AUTH_HOST=oauth.${DOMAIN:?}"
+      - "CLIENT_ID=${GOOGLE_CLIENT_ID:?}"
+      - "CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:?}"
+      - "COOKIE_DOMAIN=${DOMAIN:?}"
+      - "INSECURE_COOKIE=false"
+      - "LIFETIME=2592000" # 30 days
+      - "LOG_FORMAT=text"
+      - "LOG_LEVEL=info"
+      - "SECRET=${OAUTH_SECRET:?}"
+      - "URL_PATH=/_oauth"
+      - "WHITELIST=${OAUTH_WHITELIST:?}"
+    deploy:
+      # TODO global → replicated?
+      mode: global
+      placement:
+        constraints: [node.role == manager]
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        ## HTTP Routers
+        - "traefik.http.routers.oauth-rtr.entrypoints=https"
+        - "traefik.http.routers.oauth-rtr.rule=Host(`oauth.${DOMAIN:?}`)"
+        - "traefik.http.routers.oauth-rtr.tls=true"
+        ## Middlewares
+        - "traefik.http.routers.oauth-rtr.middlewares=chain-oauth@file"
+        ## HTTP Services
+        - "traefik.http.routers.oauth-rtr.service=oauth-svc"
+        - "traefik.http.services.oauth-svc.loadbalancer.server.port=4181"
+
+# Portainer - WebUI for Containers
+  portainer:
+    image: portainer/portainer:latest
+    command: -H unix:///var/run/docker.sock
+    networks:
+      - proxy
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "/var/data/portainer/data:/data"
+    environment:
+      - "TZ=${TZ:?}"
+    deploy:
+      mode: global
+      placement:
+        constraints: [node.role == manager]
+      restart_policy:
+        condition: none
+      labels:
+        - "traefik.enable=true"
+        ## HTTP Routers
+        - "traefik.http.routers.portainer-rtr.entrypoints=https"
+        - "traefik.http.routers.portainer-rtr.rule=Host(`portainer.${DOMAIN:?}`)"
+        - "traefik.http.routers.portainer-rtr.tls=true"
+        ## Middlewares
+        - "traefik.http.routers.portainer-rtr.middlewares=chain-oauth@file"
+        ## HTTP Services
+        - "traefik.http.routers.portainer-rtr.service=portainer-svc"
+        - "traefik.http.services.portainer-svc.loadbalancer.server.port=9000"
 

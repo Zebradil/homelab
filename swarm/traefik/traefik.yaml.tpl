@@ -1,6 +1,11 @@
+# vim: set ft=yaml:
+
 global:
   checkNewVersion: true
   sendAnonymousUsage: true
+
+log:
+  level: WARN
 
 entryPoints:
   http:
@@ -28,10 +33,8 @@ entryPoints:
         - 172.64.0.0/13
         - 131.0.72.0/22
 
-api: {}
-
-log:
-  level: WARN
+api:
+  dashboard: true
 
 accessLog:
   filePath: /logs/traefik.log
@@ -41,17 +44,21 @@ providers:
   docker:
     swarmMode: true
     exposedByDefault: false
-    network: proxy
+    network: traefik-public
+  file:
+    directory: /rules
 
 certificatesResolvers:
   dns-cloudflare:
     acme:
-      # email: $CLOUDFLARE_EMAIL
-      email: design.ber@gmail.com
-      storage: /acme.json
+      email: ${ACME_EMAIL}
+      storage: /acme2.json
+      #storage: /acme2-test.json
+      #caServer: "https://acme-staging-v02.api.letsencrypt.org/directory" # For testing purposes
       dnsChallenge:
         provider: cloudflare
         resolvers:
           - "1.1.1.1:53"
           - "1.0.0.1:53"
         delayBeforeCheck: 90
+

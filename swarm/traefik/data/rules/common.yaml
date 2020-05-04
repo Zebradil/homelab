@@ -1,0 +1,31 @@
+http:
+  middlewares:
+    basic-auth:
+      basicAuth:
+        usersFile: /.htpasswd
+    rate-limit:
+      rateLimit:
+        average: 100
+        burst: 50
+    oauth:
+      forwardAuth:
+        address: 'http://oauth:4181'
+        trustForwardHeader: true
+        authResponseHeaders:
+          - X-Forwarded-User
+
+    chain-no-auth:
+      chain:
+        middlewares:
+          - rate-limit
+    chain-basic-auth:
+      chain:
+        middlewares:
+          - rate-limit
+          - basic-auth
+    chain-oauth:
+      chain:
+        middlewares:
+          - rate-limit
+          - oauth
+
