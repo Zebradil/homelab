@@ -5,7 +5,7 @@ global:
   sendAnonymousUsage: true
 
 log:
-  level: WARN
+  level: INFO
 
 entryPoints:
   http:
