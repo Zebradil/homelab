@@ -99,6 +99,7 @@ services:
         - "traefik.http.routers.oauth-rtr.entrypoints=https"
         - "traefik.http.routers.oauth-rtr.rule=Host(`oauth.${DOMAIN:?}`)"
         - "traefik.http.routers.oauth-rtr.tls=true"
+        - "traefik.http.routers.oauth-rtr.tls.certresolver=dns-cloudflare"
         ## Middlewares
         - "traefik.http.routers.oauth-rtr.middlewares=chain-oauth@file"
         ## HTTP Services
@@ -128,6 +129,7 @@ services:
         - "traefik.http.routers.portainer-rtr.entrypoints=https"
         - "traefik.http.routers.portainer-rtr.rule=Host(`portainer.${DOMAIN:?}`)"
         - "traefik.http.routers.portainer-rtr.tls=true"
+        - "traefik.http.routers.portainer-rtr.tls.certresolver=dns-cloudflare"
         ## Middlewares
         - "traefik.http.routers.portainer-rtr.middlewares=chain-oauth@file"
         ## HTTP Services
