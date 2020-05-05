@@ -1,3 +1,5 @@
 .env
 .htpasswd
 traefik/data/traefik.yaml
+/backup/*
+!.keep
