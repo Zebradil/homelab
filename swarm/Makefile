@@ -17,7 +17,10 @@ ifneq ($(DOCKER_MACHINE_NAME),$(DOCKER_NAME))
 $(error check to which docker you are connected)
 endif
 
-deploy-all:: upload-traefik
+up:: upload-traefik deploy-all
+down:: destroy-all
+
+deploy-all::
 	docker stack deploy $(STACK_NAME) -c docker-compose.yaml
 
 destroy-all::
@@ -33,3 +36,4 @@ upload-traefik:
 
 generate-htpasswd:
 	@printf "`read -p 'Username: ' username; echo $${username}`:`openssl passwd -apr1`\n" >> traefik.htpasswd
+
