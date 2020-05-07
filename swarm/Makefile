@@ -1,6 +1,10 @@
-SHELL = bash
-STACK_NAME = a
-DOCKER_DATA_DIR = /var/data
+export
+
+DOCKER_DATA_DIR ?= /var/data
+NET_NAME ?= public-proxy
+
+SHELL := bash
+LIB_MK := $(realpath lib.mk)
 
 include .env
 export $(shell sed 's/=.*//' .env)
@@ -17,23 +21,30 @@ ifneq ($(DOCKER_MACHINE_NAME),$(DOCKER_NAME))
 $(error check to which docker you are connected)
 endif
 
-up:: upload-traefik deploy-all
-down:: destroy-all
+up:: up-common up-traefik up-heimdall up-portainer
+down:: down-common down-traefik down-heimdall up-portainer
 
-deploy-all::
-	docker stack deploy $(STACK_NAME) -c docker-compose.yaml
+up-common::
+up-heimdall::
+up-portainer::
+up-traefik::
+up-%::
+	$(MAKE) -C $* up
 
-destroy-all::
-	docker stack rm $(STACK_NAME)
+update-heimdall::
+update-portainer::
+update-traefik::
+update-%::
+	$(MAKE) -C $* update
 
-update-%: upload-%
-	docker service update --force $(STACK_NAME)_$*
-
-upload-traefik:
-	envsubst < traefik/traefik.yaml.tpl > traefik/data/traefik.yaml
-	docker-machine scp -r -d traefik/data/. $(DOCKER_MACHINE_NAME):$(DOCKER_DATA_DIR)/traefik/
-	docker-machine scp -d traefik/logrotate $(DOCKER_MACHINE_NAME):/etc/logrotate.d/traefik
+down-common::
+down-heimdall::
+down-portainer::
+down-traefik::
+down-%::
+	$(MAKE) -C $* down
 
 generate-htpasswd:
-	@printf "`read -p 'Username: ' username; echo $${username}`:`openssl passwd -apr1`\n" >> traefik.htpasswd
+	@printf "`read -p 'Username: ' username; echo $${username}`:`openssl passwd -apr1`\n" >> .htpasswd
+	@echo Appended new line to .htpasswd
 

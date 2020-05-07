@@ -2,12 +2,8 @@ version: "3.7"
 
 networks:
   proxy:
-    name: traefik-public
-    driver: overlay
-    ipam:
-      driver: default
-      config:
-      - subnet: 10.1.0.0/24
+    name: "${NET_NAME?:}"
+    external: true
 
 secrets:
   cloudflare-api-key:
@@ -105,62 +101,3 @@ services:
         ## HTTP Services
         - "traefik.http.routers.oauth-rtr.service=oauth-svc"
         - "traefik.http.services.oauth-svc.loadbalancer.server.port=4181"
-
-# Portainer - WebUI for Containers
-  portainer:
-    image: portainer/portainer:latest
-    command: -H unix:///var/run/docker.sock
-    networks:
-      - proxy
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "/var/data/portainer/data:/data"
-    environment:
-      - "TZ=${TZ:?}"
-    deploy:
-      mode: global
-      placement:
-        constraints: [node.role == manager]
-      restart_policy:
-        condition: none
-      labels:
-        - "traefik.enable=true"
-        ## HTTP Routers
-        - "traefik.http.routers.portainer-rtr.entrypoints=https"
-        - "traefik.http.routers.portainer-rtr.rule=Host(`portainer.${DOMAIN:?}`)"
-        - "traefik.http.routers.portainer-rtr.tls=true"
-        - "traefik.http.routers.portainer-rtr.tls.certresolver=dns-cloudflare"
-        ## Middlewares
-        - "traefik.http.routers.portainer-rtr.middlewares=chain-oauth@file"
-        ## HTTP Services
-        - "traefik.http.routers.portainer-rtr.service=portainer-svc"
-        - "traefik.http.services.portainer-svc.loadbalancer.server.port=9000"
-
-# Heimdall - Unified Frontend Alternative
-# Putting all services behind Oragnizr slows things down.
-  heimdall:
-    image: linuxserver/heimdall:latest
-    networks:
-      - proxy
-    volumes:
-      - /var/data/heimdall:/config
-    environment:
-      - "TZ=${TZ:?}"
-    deploy:
-      mode: global
-      placement:
-        constraints: [node.role == manager]
-      restart_policy:
-        condition: none
-      labels:
-        - "traefik.enable=true"
-        ## HTTP Routers
-        - "traefik.http.routers.heimdall-rtr.entrypoints=https"
-        - "traefik.http.routers.heimdall-rtr.rule=Host(`heimdall.${DOMAIN:?}`)"
-        - "traefik.http.routers.heimdall-rtr.tls=true"
-        - "traefik.http.routers.heimdall-rtr.tls.certresolver=dns-cloudflare"
-        ## Middlewares
-        - "traefik.http.routers.heimdall-rtr.middlewares=chain-oauth@file"
-        ## HTTP Services
-        - "traefik.http.routers.heimdall-rtr.service=heimdall-svc"
-        - "traefik.http.services.heimdall-svc.loadbalancer.server.port=80"

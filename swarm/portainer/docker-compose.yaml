@@ -1,39 +1,36 @@
-version: '3.7'
+version: "3.7"
+
+networks:
+  proxy:
+    name: "${NET_NAME?:}"
+    external: true
 
 services:
   portainer:
-    image: portainer/portainer
-    command: -H tcp://proxy:2375
-    deploy:
-      labels:
-        - "traefik.backend=portainer"
-        - "traefik.frontend.rule=Host:portainer.${DOMAIN:?}"
-        - "traefik.tags=${TRAEFIK_PUBLIC_TAG:-traefik-public}"
-        - "traefik.port=9000"
-        - "traefik.docker.network=traefik-public"
-        - "traefik.backend.loadbalancer.method=drr"
-      restart_policy:
-        condition: on-failure
-    volumes:
-      - portainer_data:/data
+    image: portainer/portainer:latest
+    command: -H unix:///var/run/docker.sock
     networks:
-      - internal
       - proxy
-  proxy:
-    image: tecnativa/docker-socket-proxy
     volumes:
-     - /var/run/docker.sock:/var/run/docker.sock:ro
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "/var/data/portainer/data:/data"
     environment:
-      - CONTAINERS=1
-    networks:
-      - internal
-
-networks:
-  internal:
-    external: false
-  proxy:
-    external: true
-    name: traefik-public
-
-volumes:
-  portainer_data:
+      - "TZ=${TZ:?}"
+    deploy:
+      mode: global
+      placement:
+        constraints: [node.role == manager]
+      restart_policy:
+        condition: none
+      labels:
+        - "traefik.enable=true"
+        ## HTTP Routers
+        - "traefik.http.routers.portainer-rtr.entrypoints=https"
+        - "traefik.http.routers.portainer-rtr.rule=Host(`portainer.${DOMAIN:?}`)"
+        - "traefik.http.routers.portainer-rtr.tls=true"
+        - "traefik.http.routers.portainer-rtr.tls.certresolver=dns-cloudflare"
+        ## Middlewares
+        - "traefik.http.routers.portainer-rtr.middlewares=chain-oauth@file"
+        ## HTTP Services
+        - "traefik.http.routers.portainer-rtr.service=portainer-svc"
+        - "traefik.http.services.portainer-svc.loadbalancer.server.port=9000"
