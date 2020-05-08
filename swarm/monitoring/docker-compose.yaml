@@ -50,16 +50,18 @@ services:
           memory: 64M
 
   cadvisor:
-    image: google/cadvisor
+    image: gcr.io/google_containers/cadvisor:v0.35.0
     networks:
+      - proxy
       - internal
-    command: -logtostderr -docker_only
+    command: -logtostderr -housekeeping_interval=20s
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
       - /:/rootfs:ro
-      - /var/run:/var/run
+      - /dev/disk/:/dev/disk:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/run:/var/run:ro
     deploy:
       mode: global
       resources:
@@ -67,12 +69,24 @@ services:
           memory: 128M
         reservations:
           memory: 64M
+      labels:
+        - "traefik.enable=true"
+        ## HTTP Routers
+        - "traefik.http.routers.cadvisor-rtr.entrypoints=https"
+        - "traefik.http.routers.cadvisor-rtr.rule=Host(`cadvisor.${DOMAIN:?}`)"
+        - "traefik.http.routers.cadvisor-rtr.tls=true"
+        - "traefik.http.routers.cadvisor-rtr.tls.certresolver=dns-cloudflare"
+        ## Middlewares
+        - "traefik.http.routers.cadvisor-rtr.middlewares=chain-oauth@file"
+        ## HTTP Services
+        - "traefik.http.routers.cadvisor-rtr.service=cadvisor-svc"
+        - "traefik.http.services.cadvisor-svc.loadbalancer.server.port=8080"
 
   grafana:
     image: grafana/grafana:6.7.3
     networks:
-      - internal
       - proxy
+      - internal
     environment:
       - "GF_SECURITY_ADMIN_USER=${ADMIN_USER:-admin}"
       - "GF_SECURITY_ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}"
