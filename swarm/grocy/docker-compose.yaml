@@ -16,7 +16,8 @@ services:
       - "TZ=${TZ:?}"
       - "GROCY_CULTURE=${GROCY_CULTURE:-en}"
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
       placement:
         constraints: [node.role == manager]
       restart_policy:
