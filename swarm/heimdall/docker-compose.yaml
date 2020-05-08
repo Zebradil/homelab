@@ -20,7 +20,7 @@ services:
       placement:
         constraints: [node.role == manager]
       restart_policy:
-        condition: none
+        condition: on-failure
       labels:
         - "traefik.enable=true"
         ## HTTP Routers
