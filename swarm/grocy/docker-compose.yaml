@@ -1,33 +1,35 @@
 version: '3.7'
 
+networks:
+  proxy:
+    name: "${NET_NAME?:}"
+    external: true
+
 services:
   grocy:
     image: linuxserver/grocy
-    deploy:
-      labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.router0.rule=Host(grocy.${DOMAIN:?})"
-        - "traefik.backend=grocy"
-        - "traefik.tags=${TRAEFIK_PUBLIC_TAG:-traefik-public}"
-        - "traefik.port=80"
-        - "traefik.docker.network=traefik-public"
-      restart_policy:
-        condition: on-failure
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/Berlin
-      - GROCY_CULTURE=ru
-    volumes:
-      - grocy_config:/config
     networks:
       - proxy
-
-networks:
-  proxy:
-    external: true
-    name: traefik-public
-
-volumes:
-  grocy_config:
-
+    volumes:
+      - /var/data/grocy:/config
+    environment:
+      - "TZ=${TZ:?}"
+      - "GROCY_CULTURE=${GROCY_CULTURE:-en}"
+    deploy:
+      mode: global
+      placement:
+        constraints: [node.role == manager]
+      restart_policy:
+        condition: none
+      labels:
+        - "traefik.enable=true"
+        ## HTTP Routers
+        - "traefik.http.routers.grocy-rtr.entrypoints=https"
+        - "traefik.http.routers.grocy-rtr.rule=Host(`grocy.${DOMAIN:?}`)"
+        - "traefik.http.routers.grocy-rtr.tls=true"
+        - "traefik.http.routers.grocy-rtr.tls.certresolver=dns-cloudflare"
+        ## Middlewares
+        - "traefik.http.routers.grocy-rtr.middlewares=chain-oauth@file"
+        ## HTTP Services
+        - "traefik.http.routers.grocy-rtr.service=grocy-svc"
+        - "traefik.http.services.grocy-svc.loadbalancer.server.port=80"

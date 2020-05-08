@@ -1,7 +1,3 @@
-SERVICE_NAME=grocy
+STACK_NAME=grocy
 
-up:
-	docker stack deploy $(SERVICE_NAME) -c docker-compose.yaml
-
-down:
-	docker stack rm $(SERVICE_NAME)
+include $(LIB_MK)
