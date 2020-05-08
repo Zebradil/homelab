@@ -27,6 +27,7 @@ down:: down-common down-traefik down-heimdall up-portainer down-grocy
 up-common::
 up-grocy::
 up-heimdall::
+up-monitoring::
 up-portainer::
 up-traefik::
 up-%::
@@ -34,6 +35,7 @@ up-%::
 
 update-grocy::
 update-heimdall::
+update-monitoring::
 update-portainer::
 update-traefik::
 update-%::
@@ -42,6 +44,7 @@ update-%::
 down-common::
 down-grocy::
 down-heimdall::
+down-monitoring::
 down-portainer::
 down-traefik::
 down-%::

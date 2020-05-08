@@ -1,0 +1,219 @@
+version: "3.7"
+
+networks:
+  proxy:
+    name: "${NET_NAME?:}"
+    external: true
+  internal:
+
+volumes:
+    prometheus: {}
+    grafana: {}
+    alertmanager: {}
+
+configs:
+  dockerd_config:
+    file: ./dockerd-exporter/Caddyfile
+  node_rules:
+    file: ./prometheus/rules/swarm_node.rules.yml
+  task_rules:
+    file: ./prometheus/rules/swarm_task.rules.yml
+
+services:
+  dockerd-exporter:
+    image: stefanprodan/caddy
+    networks:
+      - internal
+    environment:
+      - DOCKER_GWBRIDGE_IP=172.18.0.1
+    configs:
+      - source: dockerd_config
+        target: /etc/caddy/Caddyfile
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+
+  cadvisor:
+    image: google/cadvisor
+    networks:
+      - internal
+    command: -logtostderr -docker_only
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /:/rootfs:ro
+      - /var/run:/var/run
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+
+  grafana:
+    image: stefanprodan/swarmprom-grafana:5.3.4
+    networks:
+      - internal
+      - proxy
+    environment:
+      - "GF_SECURITY_ADMIN_USER=${ADMIN_USER:-admin}"
+      - "GF_SECURITY_ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}"
+      - "GF_USERS_ALLOW_SIGN_UP=false"
+      #- GF_SERVER_ROOT_URL=${GF_SERVER_ROOT_URL:-localhost}
+      #- GF_SMTP_ENABLED=${GF_SMTP_ENABLED:-false}
+      #- GF_SMTP_FROM_ADDRESS=${GF_SMTP_FROM_ADDRESS:-grafana@test.com}
+      #- GF_SMTP_FROM_NAME=${GF_SMTP_FROM_NAME:-Grafana}
+      #- GF_SMTP_HOST=${GF_SMTP_HOST:-smtp:25}
+      #- GF_SMTP_USER=${GF_SMTP_USER}
+      #- GF_SMTP_PASSWORD=${GF_SMTP_PASSWORD}
+    volumes:
+      - grafana:/var/lib/grafana
+    deploy:
+      mode: replicated
+      replicas: 1
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+      labels:
+        - "traefik.enable=true"
+        ## HTTP Routers
+        - "traefik.http.routers.grafana-rtr.entrypoints=https"
+        - "traefik.http.routers.grafana-rtr.rule=Host(`grafana.${DOMAIN:?}`)"
+        - "traefik.http.routers.grafana-rtr.tls=true"
+        - "traefik.http.routers.grafana-rtr.tls.certresolver=dns-cloudflare"
+        ## Middlewares
+        - "traefik.http.routers.grafana-rtr.middlewares=chain-oauth@file"
+        ## HTTP Services
+        - "traefik.http.routers.grafana-rtr.service=grafana-svc"
+        - "traefik.http.services.grafana-svc.loadbalancer.server.port=3000"
+
+  alertmanager:
+    image: stefanprodan/swarmprom-alertmanager:v0.14.0
+    networks:
+      - internal
+      - proxy
+    environment:
+      - "SLACK_URL=${SLACK_URL:-https://hooks.slack.com/services/TOKEN}"
+      - "SLACK_CHANNEL=${SLACK_CHANNEL:-general}"
+      - "SLACK_USER=${SLACK_USER:-alertmanager}"
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    volumes:
+      - alertmanager:/alertmanager
+    deploy:
+      mode: replicated
+      replicas: 1
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+      labels:
+        - "traefik.enable=true"
+        ## HTTP Routers
+        - "traefik.http.routers.alertmanager-rtr.entrypoints=https"
+        - "traefik.http.routers.alertmanager-rtr.rule=Host(`alertmanager.${DOMAIN:?}`)"
+        - "traefik.http.routers.alertmanager-rtr.tls=true"
+        - "traefik.http.routers.alertmanager-rtr.tls.certresolver=dns-cloudflare"
+        ## Middlewares
+        - "traefik.http.routers.alertmanager-rtr.middlewares=chain-oauth@file"
+        ## HTTP Services
+        - "traefik.http.routers.alertmanager-rtr.service=alertmanager-svc"
+        - "traefik.http.services.alertmanager-svc.loadbalancer.server.port=9093"
+
+  unsee:
+    image: cloudflare/unsee:v0.8.0
+    networks:
+      - internal
+      - proxy
+    environment:
+      - "ALERTMANAGER_URIS=default:http://alertmanager:9093"
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        ## HTTP Routers
+        - "traefik.http.routers.unsee-rtr.entrypoints=https"
+        - "traefik.http.routers.unsee-rtr.rule=Host(`unsee.${DOMAIN:?}`)"
+        - "traefik.http.routers.unsee-rtr.tls=true"
+        - "traefik.http.routers.unsee-rtr.tls.certresolver=dns-cloudflare"
+        ## Middlewares
+        - "traefik.http.routers.unsee-rtr.middlewares=chain-oauth@file"
+        ## HTTP Services
+        - "traefik.http.routers.unsee-rtr.service=unsee-svc"
+        - "traefik.http.services.unsee-svc.loadbalancer.server.port=8080"
+
+  node-exporter:
+    image: stefanprodan/swarmprom-node-exporter:v0.16.0
+    networks:
+      - internal
+    environment:
+      - "NODE_ID={{.Node.ID}}"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+      - /etc/hostname:/etc/nodename
+    command:
+      - '--path.sysfs=/host/sys'
+      - '--path.procfs=/host/proc'
+      - '--collector.textfile.directory=/etc/node-exporter/'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+      - '--no-collector.ipvs'
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+
+  prometheus:
+    image: stefanprodan/swarmprom-prometheus:v2.5.0
+    networks:
+      - internal
+      - proxy
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention=${PROMETHEUS_RETENTION:-24h}'
+    volumes:
+      - prometheus:/prometheus
+    configs:
+      - source: node_rules
+        target: /etc/prometheus/swarm_node.rules.yml
+      - source: task_rules
+        target: /etc/prometheus/swarm_task.rules.yml
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          memory: 768M
+        reservations:
+          memory: 128M
+      labels:
+        - "traefik.enable=true"
+        ## HTTP Routers
+        - "traefik.http.routers.prometheus-rtr.entrypoints=https"
+        - "traefik.http.routers.prometheus-rtr.rule=Host(`prometheus.${DOMAIN:?}`)"
+        - "traefik.http.routers.prometheus-rtr.tls=true"
+        - "traefik.http.routers.prometheus-rtr.tls.certresolver=dns-cloudflare"
+        ## Middlewares
+        - "traefik.http.routers.prometheus-rtr.middlewares=chain-oauth@file"
+        ## HTTP Services
+        - "traefik.http.routers.prometheus-rtr.service=prometheus-svc"
+        - "traefik.http.services.prometheus-svc.loadbalancer.server.port=9090"
