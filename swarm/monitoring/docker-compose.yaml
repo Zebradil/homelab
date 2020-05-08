@@ -14,6 +14,16 @@ volumes:
 configs:
   dockerd_config:
     file: ./dockerd-exporter/Caddyfile
+  grafana_prometheus:
+    file: ./grafana/datasources/prometheus.yml
+  grafana_provisioning_dashboards:
+    file: ./grafana/provisioning_dashboards.yml
+  grafana_dashboard_nodes:
+    file: ./grafana/dashboards/swarmprom-nodes-dash.json
+  grafana_dashboard_prometheus:
+    file: ./grafana/dashboards/swarmprom-prometheus-dash.json
+  grafana_dashboard_services:
+    file: ./grafana/dashboards/swarmprom-services-dash.json
   prometheus_config:
     file: ./prometheus/conf/prometheus.yml
   prometheus_node_rules:
@@ -59,7 +69,7 @@ services:
           memory: 64M
 
   grafana:
-    image: stefanprodan/swarmprom-grafana:5.3.4
+    image: grafana/grafana:6.7.3
     networks:
       - internal
       - proxy
@@ -67,15 +77,20 @@ services:
       - "GF_SECURITY_ADMIN_USER=${ADMIN_USER:-admin}"
       - "GF_SECURITY_ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}"
       - "GF_USERS_ALLOW_SIGN_UP=false"
-      #- GF_SERVER_ROOT_URL=${GF_SERVER_ROOT_URL:-localhost}
-      #- GF_SMTP_ENABLED=${GF_SMTP_ENABLED:-false}
-      #- GF_SMTP_FROM_ADDRESS=${GF_SMTP_FROM_ADDRESS:-grafana@test.com}
-      #- GF_SMTP_FROM_NAME=${GF_SMTP_FROM_NAME:-Grafana}
-      #- GF_SMTP_HOST=${GF_SMTP_HOST:-smtp:25}
-      #- GF_SMTP_USER=${GF_SMTP_USER}
-      #- GF_SMTP_PASSWORD=${GF_SMTP_PASSWORD}
+      - "GF_PATHS_PROVISIONING=/etc/grafana/provisioning/"
     volumes:
       - grafana:/var/lib/grafana
+    configs:
+      - source: grafana_prometheus
+        target: /etc/grafana/provisioning/datasources/prometheus.yml
+      - source: grafana_provisioning_dashboards
+        target: /etc/grafana/provisioning/dashboards/config.yml
+      - source: grafana_dashboard_nodes
+        target: /etc/grafana/dashboards/nodes.json
+      - source: grafana_dashboard_prometheus
+        target: /etc/grafana/dashboards/prometheus.json
+      - source: grafana_dashboard_services
+        target: /etc/grafana/dashboards/services.json
     deploy:
       mode: replicated
       replicas: 1
