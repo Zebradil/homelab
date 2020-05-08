@@ -44,7 +44,7 @@ providers:
   docker:
     swarmMode: true
     exposedByDefault: false
-    network: traefik-public
+    network: ${NET_NAME}
   file:
     directory: /rules
 
