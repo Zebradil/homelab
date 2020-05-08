@@ -14,9 +14,11 @@ volumes:
 configs:
   dockerd_config:
     file: ./dockerd-exporter/Caddyfile
-  node_rules:
+  prometheus_config:
+    file: ./prometheus/conf/prometheus.yml
+  prometheus_node_rules:
     file: ./prometheus/rules/swarm_node.rules.yml
-  task_rules:
+  prometheus_task_rules:
     file: ./prometheus/rules/swarm_task.rules.yml
 
 services:
@@ -179,20 +181,22 @@ services:
           memory: 64M
 
   prometheus:
-    image: stefanprodan/swarmprom-prometheus:v2.5.0
+    image: quay.io/prometheus/prometheus:v2.18.1
     networks:
       - internal
       - proxy
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
-      - '--storage.tsdb.retention=${PROMETHEUS_RETENTION:-24h}'
+      - '--storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-24h}'
     volumes:
       - prometheus:/prometheus
     configs:
-      - source: node_rules
+      - source: prometheus_config
+        target: /etc/prometheus/prometheus.yml
+      - source: prometheus_node_rules
         target: /etc/prometheus/swarm_node.rules.yml
-      - source: task_rules
+      - source: prometheus_task_rules
         target: /etc/prometheus/swarm_task.rules.yml
     deploy:
       mode: replicated
