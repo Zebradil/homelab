@@ -12,8 +12,6 @@ volumes:
     alertmanager: {}
 
 configs:
-  dockerd_config:
-    file: ./dockerd-exporter/Caddyfile
   grafana_prometheus:
     file: ./grafana/datasources/prometheus.yml
   grafana_provisioning_dashboards:
@@ -33,14 +31,10 @@ configs:
 
 services:
   dockerd-exporter:
-    image: stefanprodan/caddy
+    image: alpine/socat:latest
+    command: tcp-listen:9323,fork tcp-connect:172.18.0.1:9323
     networks:
       - internal
-    environment:
-      - DOCKER_GWBRIDGE_IP=172.18.0.1
-    configs:
-      - source: dockerd_config
-        target: /etc/caddy/Caddyfile
     deploy:
       mode: global
       resources:
