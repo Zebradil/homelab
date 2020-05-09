@@ -10,8 +10,11 @@ volumes:
     prometheus: {}
     grafana: {}
     alertmanager: {}
+    alertmanager-bot: {}
 
 configs:
+  alertmanager_config:
+    file: ./alertmanager/alertmanager.yml
   grafana_prometheus:
     file: ./grafana/datasources/prometheus.yml
   grafana_provisioning_dashboards:
@@ -121,19 +124,19 @@ services:
         - "traefik.http.services.grafana-svc.loadbalancer.server.port=3000"
 
   alertmanager:
-    image: stefanprodan/swarmprom-alertmanager:v0.14.0
+    image: quay.io/prometheus/alertmanager:v0.20.0
     networks:
       - internal
       - proxy
-    environment:
-      - "SLACK_URL=${SLACK_URL:-https://hooks.slack.com/services/TOKEN}"
-      - "SLACK_CHANNEL=${SLACK_CHANNEL:-general}"
-      - "SLACK_USER=${SLACK_USER:-alertmanager}"
     command:
       - '--config.file=/etc/alertmanager/alertmanager.yml'
       - '--storage.path=/alertmanager'
+      - '--log.level=debug'
     volumes:
       - alertmanager:/alertmanager
+    configs:
+      - source: alertmanager_config
+        target: /etc/alertmanager/alertmanager.yml
     deploy:
       mode: replicated
       replicas: 1
@@ -154,6 +157,28 @@ services:
         ## HTTP Services
         - "traefik.http.routers.alertmanager-rtr.service=alertmanager-svc"
         - "traefik.http.services.alertmanager-svc.loadbalancer.server.port=9093"
+
+  alertmanager-bot:
+    image: metalmatze/alertmanager-bot:0.4.2
+    networks:
+      - internal
+    environment:
+      - "ALERTMANAGER_URL=http://alertmanager:9093"
+      - "BOLT_PATH=/data/bot.db"
+      - "STORE=bolt"
+      - "TELEGRAM_ADMIN=${TELEGRAM_CHAT_ID:?}"
+      - "TELEGRAM_TOKEN=${TELEGRAM_BOT_TOKEN:?}"
+      - "TEMPLATE_PATHS=/templates/default.tmpl"
+    volumes:
+      - alertmanager-bot:/data
+    deploy:
+      mode: replicated
+      replicas: 1
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
 
   unsee:
     image: cloudflare/unsee:v0.8.0
