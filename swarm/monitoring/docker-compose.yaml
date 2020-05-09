@@ -180,28 +180,28 @@ services:
         reservations:
           memory: 64M
 
-  unsee:
-    image: cloudflare/unsee:v0.8.0
+  karma:
+    image: lmierzwa/karma:v0.60
     networks:
       - internal
       - proxy
     environment:
-      - "ALERTMANAGER_URIS=default:http://alertmanager:9093"
+      - "ALERTMANAGER_URI=http://alertmanager:9093"
     deploy:
       mode: replicated
       replicas: 1
       labels:
         - "traefik.enable=true"
         ## HTTP Routers
-        - "traefik.http.routers.unsee-rtr.entrypoints=https"
-        - "traefik.http.routers.unsee-rtr.rule=Host(`unsee.${DOMAIN:?}`)"
-        - "traefik.http.routers.unsee-rtr.tls=true"
-        - "traefik.http.routers.unsee-rtr.tls.certresolver=dns-cloudflare"
+        - "traefik.http.routers.karma-rtr.entrypoints=https"
+        - "traefik.http.routers.karma-rtr.rule=Host(`karma.${DOMAIN:?}`)"
+        - "traefik.http.routers.karma-rtr.tls=true"
+        - "traefik.http.routers.karma-rtr.tls.certresolver=dns-cloudflare"
         ## Middlewares
-        - "traefik.http.routers.unsee-rtr.middlewares=chain-oauth@file"
+        - "traefik.http.routers.karma-rtr.middlewares=chain-oauth@file"
         ## HTTP Services
-        - "traefik.http.routers.unsee-rtr.service=unsee-svc"
-        - "traefik.http.services.unsee-svc.loadbalancer.server.port=8080"
+        - "traefik.http.routers.karma-rtr.service=karma-svc"
+        - "traefik.http.services.karma-svc.loadbalancer.server.port=8080"
 
   node-exporter:
     image: stefanprodan/swarmprom-node-exporter:v0.16.0
