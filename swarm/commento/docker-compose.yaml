@@ -32,7 +32,7 @@ services:
         - "traefik.http.routers.commento-rtr.tls=true"
         - "traefik.http.routers.commento-rtr.tls.certresolver=dns-cloudflare"
         ## Middlewares
-        - "traefik.http.routers.commento-rtr.middlewares=chain-oauth@file"
+        - "traefik.http.routers.commento-rtr.middlewares=chain-no-auth@file"
         ## HTTP Services
         - "traefik.http.routers.commento-rtr.service=commento-svc"
         - "traefik.http.services.commento-svc.loadbalancer.server.port=80"
