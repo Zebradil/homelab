@@ -2,7 +2,7 @@ version: "3.7"
 
 networks:
   proxy:
-    name: "${NET_NAME?:}"
+    name: "${NET_NAME:?}"
     external: true
 
 secrets:
