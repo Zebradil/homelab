@@ -1,0 +1,38 @@
+version: '3.7'
+
+networks:
+  proxy:
+    name: "${NET_NAME:?}"
+    external: true
+
+services:
+  taskd:
+    image: zebradil/taskd
+    networks:
+      - proxy
+    volumes:
+      - /var/data/taskd:/var/taskd
+    environment:
+      - "CERT_CN=taskd.${DOMAIN:?}"
+      - "CERT_COUNTRY=${TASKD_COUNTRY:?}"
+      - "CERT_LOCALITY=${TASKD_LOCALITY:?}"
+      - "CERT_ORGANIZATION=${TASKD_ORGANIZATION:?}"
+      - "CERT_STATE=${TASKD_STATE:?}"
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        ## HTTP Routers
+        - "traefik.http.routers.taskd-rtr.priority=1"
+        - "traefik.http.routers.taskd-rtr.entrypoints=http"
+        - "traefik.http.routers.taskd-rtr.rule=Host(`taskd.${DOMAIN:?}`)"
+        ## Middlewares
+        - "traefik.http.routers.taskd-rtr.middlewares=chain-no-auth@file"
+        ## HTTP Services
+        - "traefik.http.routers.taskd-rtr.service=taskd-svc"
+        - "traefik.http.services.taskd-svc.loadbalancer.server.port=53589"
