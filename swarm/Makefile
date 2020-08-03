@@ -21,8 +21,8 @@ ifneq ($(DOCKER_MACHINE_NAME),$(DOCKER_NAME))
 $(error check to which docker you are connected)
 endif
 
-up:: up-common up-traefik up-heimdall up-portainer up-grocy up-commento
-down:: down-common down-traefik down-heimdall up-portainer down-grocy down-commento
+up:: up-common up-traefik up-heimdall up-portainer up-grocy up-commento up-taskd
+down:: down-common down-traefik down-heimdall up-portainer down-grocy down-commento down-taskd
 
 up-commento::
 up-common::
@@ -30,6 +30,7 @@ up-grocy::
 up-heimdall::
 up-monitoring::
 up-portainer::
+up-taskd::
 up-traefik::
 up-%::
 	$(MAKE) -C $* up
@@ -39,6 +40,7 @@ update-grocy::
 update-heimdall::
 update-monitoring::
 update-portainer::
+update-taskd::
 update-traefik::
 update-%::
 	$(MAKE) -C $* update
@@ -49,6 +51,7 @@ down-grocy::
 down-heimdall::
 down-monitoring::
 down-portainer::
+down-taskd::
 down-traefik::
 down-%::
 	$(MAKE) -C $* down
