@@ -27,6 +27,10 @@ services:
         published: 443
         protocol: tcp
         mode: host
+      - target: 53589
+        published: 53589
+        protocol: tcp
+        mode: host
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "/var/data/traefik/traefik.yaml:/traefik.yaml:ro"

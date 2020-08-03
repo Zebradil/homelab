@@ -31,11 +31,10 @@ services:
       labels:
         - "traefik.enable=true"
         ## HTTP Routers
-        - "traefik.http.routers.taskd-rtr.priority=1"
-        - "traefik.http.routers.taskd-rtr.entrypoints=http"
-        - "traefik.http.routers.taskd-rtr.rule=Host(`taskd.${DOMAIN:?}`)"
-        ## Middlewares
-        - "traefik.http.routers.taskd-rtr.middlewares=chain-no-auth@file"
+        - "traefik.tcp.routers.taskd-rtr.entrypoints=taskd"
+        - "traefik.tcp.routers.taskd-rtr.rule=HostSNI(`taskd.${DOMAIN:?}`)"
+        - "traefik.tcp.routers.taskd-rtr.tls=true"
+        - "traefik.tcp.routers.taskd-rtr.tls.passthrough=true"
         ## HTTP Services
-        - "traefik.http.routers.taskd-rtr.service=taskd-svc"
-        - "traefik.http.services.taskd-svc.loadbalancer.server.port=53589"
+        - "traefik.tcp.routers.taskd-rtr.service=taskd-svc"
+        - "traefik.tcp.services.taskd-svc.loadbalancer.server.port=53589"
