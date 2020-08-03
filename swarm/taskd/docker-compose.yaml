@@ -5,13 +5,16 @@ networks:
     name: "${NET_NAME:?}"
     external: true
 
+volumes:
+  data:
+
 services:
   taskd:
     image: zebradil/taskd
     networks:
       - proxy
     volumes:
-      - /var/data/taskd:/var/taskd
+      - data:/var/taskd
     environment:
       - "CERT_CN=taskd.${DOMAIN:?}"
       - "CERT_COUNTRY=${TASKD_COUNTRY:?}"
