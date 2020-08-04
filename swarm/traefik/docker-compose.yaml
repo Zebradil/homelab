@@ -1,0 +1,111 @@
+version: '3.8'
+
+networks:
+  proxy:
+    name: ${NET_NAME:?}
+    external: true
+
+configs:
+  traefik-static-config:
+    name: traefik-static-config-705882cd55f3b5b761403dfdea055562
+    file: ./config/static.yaml
+  traefik-dynamic-config:
+    name: traefik-dynamic-config-ca943e76f01bd8ae34e4ff64ac697af8
+    file: ./config/dynamic.yaml
+
+secrets:
+  cloudflare-api-key:
+    external: true
+  cloudflare-api-mail:
+    external: true
+
+services:
+  traefik:
+    image: traefik:chevrotin # the chevrotin tag refers to v2.2.x
+    command: --configfile=/config/static.yaml
+    networks:
+    - proxy
+    ports:
+      # https://www.reddit.com/r/docker/comments/c1wrep/traefik_reverse_proxy_question_docker_overlay/
+    - target: 80
+      published: 80
+      protocol: tcp
+      mode: host
+    - target: 443
+      published: 443
+      protocol: tcp
+      mode: host
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+    - /var/data/traefik/.htpasswd:/.htpasswd:ro
+    - /var/data/traefik/acme2.json:/acme2.json
+    - /var/log/traefik:/logs
+    configs:
+    - source: traefik-static-config
+      target: /config/static.yaml
+    - source: traefik-dynamic-config
+      target: /config/dynamic.yaml
+    secrets:
+    - cloudflare-api-key
+    - cloudflare-api-mail
+    environment:
+      CF_API_KEY_FILE: /run/secrets/cloudflare-api-key
+      CF_API_EMAIL_FILE: /run/secrets/cloudflare-api-mail
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+      restart_policy:
+        condition: on-failure
+      labels:
+      - traefik.enable=true
+          # HTTP Routers
+      - traefik.http.routers.traefik-rtr.entrypoints=https
+      - traefik.http.routers.traefik-rtr.rule=Host(`traefik.${DOMAIN:?}`)
+      - traefik.http.routers.traefik-rtr.tls=true
+      - traefik.http.routers.traefik-rtr.tls.certresolver=dns-cloudflare
+          ## Middlewares
+      - traefik.http.routers.traefik-rtr.middlewares=chain-oauth@file
+          ## Services - API
+      - traefik.http.routers.traefik-rtr.service=api@internal
+      - traefik.http.services.dummyPortService.loadbalancer.server.port=11111
+
+# Google OAuth - Single Sign On using OAuth 2.0
+  # https://hub.docker.com/r/thomseddon/traefik-forward-auth
+  # https://www.smarthomebeginner.com/google-oauth-with-traefik-docker/
+  oauth:
+    image: thomseddon/traefik-forward-auth:latest
+    networks:
+    - proxy
+    environment:
+    - AUTH_HOST=oauth.${DOMAIN:?}
+    - CLIENT_ID=${GOOGLE_CLIENT_ID:?}
+    - CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:?}
+    - COOKIE_DOMAIN=${DOMAIN:?}
+    - INSECURE_COOKIE=false
+    - LIFETIME=2592000     # 30 days
+    - LOG_FORMAT=text
+    - LOG_LEVEL=info
+    - SECRET=${OAUTH_SECRET:?}
+    - URL_PATH=/_oauth
+    - WHITELIST=${OAUTH_WHITELIST:?}
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+      restart_policy:
+        condition: on-failure
+      labels:
+      - traefik.enable=true
+        ## HTTP Routers
+      - traefik.http.routers.oauth-rtr.entrypoints=https
+      - traefik.http.routers.oauth-rtr.rule=Host(`oauth.${DOMAIN:?}`)
+      - traefik.http.routers.oauth-rtr.tls=true
+      - traefik.http.routers.oauth-rtr.tls.certresolver=dns-cloudflare
+        ## Middlewares
+      - traefik.http.routers.oauth-rtr.middlewares=chain-oauth@file
+        ## HTTP Services
+      - traefik.http.routers.oauth-rtr.service=oauth-svc
+      - traefik.http.services.oauth-svc.loadbalancer.server.port=4181
