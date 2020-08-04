@@ -9,16 +9,16 @@ LIB_MK := $(realpath lib.mk)
 include .env
 export $(shell sed 's/=.*//' .env)
 
-ifndef DOCKER_NAME
-$(error DOCKER_NAME is not defined)
+ifndef CLUSTER_ID
+$(error CLUSTER_ID is not defined)
 endif
 
 ifndef DOMAIN
 $(error DOMAIN is not defined)
 endif
 
-ifneq ($(DOCKER_MACHINE_NAME),$(DOCKER_NAME))
-$(error check to which docker you are connected)
+ifneq ($(shell docker info -f '{{.Swarm.Cluster.ID}}'),$(CLUSTER_ID))
+$(error check to which docker swarm cluster you are connected)
 endif
 
 ## Deploy
