@@ -1,4 +1,4 @@
-export
+include .bootstrap.mk
 
 DOCKER_DATA_DIR ?= /var/data
 NET_NAME ?= public-proxy
@@ -21,42 +21,53 @@ ifneq ($(DOCKER_MACHINE_NAME),$(DOCKER_NAME))
 $(error check to which docker you are connected)
 endif
 
-up:: up-common up-traefik up-heimdall up-portainer up-grocy up-commento up-taskd
-down:: down-common down-traefik down-heimdall up-portainer down-grocy down-commento down-taskd
+## Deploy
 
-up-commento::
-up-common::
-up-grocy::
-up-heimdall::
-up-monitoring::
-up-portainer::
-up-taskd::
-up-traefik::
+up:: ## Deploy ALL THE THINGS!!1
+up:: up-common up-traefik up-heimdall up-portainer up-grocy up-commento up-taskd
+
+up-commento:: ## Deploy commento stack
+up-common:: ## Deploy common stack
+up-grocy:: ## Deploy grocy stack
+up-heimdall:: ## Deploy heimdall stack
+up-monitoring:: ## Deploy monitoring stack
+up-portainer:: ## Deploy portainer stack
+up-taskd:: ## Deploy taskd stack
+up-traefik:: ## Deploy traefik stack
 up-%::
 	$(MAKE) -C $* up
 
-update-commento::
-update-grocy::
-update-heimdall::
-update-monitoring::
-update-portainer::
-update-taskd::
-update-traefik::
+## Update
+
+update-commento:: ## Update commento stack
+update-grocy:: ## Update grocy stack
+update-heimdall:: ## Update heimdall stack
+update-monitoring:: ## Update monitoring stack
+update-portainer:: ## Update portainer stack
+update-taskd:: ## Update taskd stack
+update-traefik:: ## Update traefik stack
 update-%::
 	$(MAKE) -C $* update
 
-down-commento::
-down-common::
-down-grocy::
-down-heimdall::
-down-monitoring::
-down-portainer::
-down-taskd::
-down-traefik::
+## Destroy
+
+down:: ## Destroy ALL THE THINGS!!1
+down:: down-common down-traefik down-heimdall up-portainer down-grocy down-commento down-taskd
+
+down-commento:: ## Destroy commento stack
+down-common:: ## Destroy common stack
+down-grocy:: ## Destroy grocy stack
+down-heimdall:: ## Destroy heimdall stack
+down-monitoring:: ## Destroy monitoring stack
+down-portainer:: ## Destroy portainer stack
+down-taskd:: ## Destroy taskd stack
+down-traefik:: ## Destroy traefik stack
 down-%::
 	$(MAKE) -C $* down
 
-generate-htpasswd:
+## Misc
+
+generate-htpasswd:: ## Add new user-pass pair to .htpasswd file
 	@printf "`read -p 'Username: ' username; echo $${username}`:`openssl passwd -apr1`\n" >> .htpasswd
 	@echo Appended new line to .htpasswd
 
