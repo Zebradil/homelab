@@ -2,10 +2,10 @@ export
 
 STACK_NAME := traefik
 
-up:: upload-traefik
+up:: render upload
 	$(MAKE) -f $(LIB_MK) $@
 
-update:: upload-traefik update-traefik update-oauth
+update:: up update-traefik update-oauth
 
 update-%::
 	$(MAKE) -f $(LIB_MK) update SERVICE_NAME=$*
@@ -13,7 +13,10 @@ update-%::
 down::
 	$(MAKE) -f $(LIB_MK) $@
 
-upload-traefik:
-	envsubst < traefik.yaml.tpl > data/traefik.yaml
-	docker-machine scp -r -d data/. $(DOCKER_MACHINE_NAME):$(DOCKER_DATA_DIR)/traefik/
+upload::
 	docker-machine scp -d logrotate $(DOCKER_MACHINE_NAME):/etc/logrotate.d/traefik
+
+render::
+	envsubst < config/static.yaml.tpl > config/static.yaml
+	docoseco < docker-compose.tpl.yaml > docker-compose.yaml
+

@@ -1,9 +1,17 @@
-version: "3.7"
+version: "3.8"
 
 networks:
   proxy:
     name: "${NET_NAME:?}"
     external: true
+
+configs:
+  traefik-static-config:
+    name: traefik-static-config
+    file: ./config/static.yaml
+  traefik-dynamic-config:
+    name: traefik-dynamic-config
+    file: ./config/dynamic.yaml
 
 secrets:
   cloudflare-api-key:
@@ -14,7 +22,7 @@ secrets:
 services:
   traefik:
     image: traefik:chevrotin # the chevrotin tag refers to v2.2.x
-    command: --configfile=traefik.yaml
+    command: --configfile=/config/static.yaml
     networks:
       - proxy
     ports:
@@ -27,17 +35,16 @@ services:
         published: 443
         protocol: tcp
         mode: host
-      - target: 53589
-        published: 53589
-        protocol: tcp
-        mode: host
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "/var/data/traefik/traefik.yaml:/traefik.yaml:ro"
       - "/var/data/traefik/.htpasswd:/.htpasswd:ro"
-      - "/var/data/traefik/rules/:/rules/:ro"
       - "/var/data/traefik/acme2.json:/acme2.json"
       - "/var/log/traefik:/logs"
+    configs:
+      - source: traefik-static-config
+        target: /config/static.yaml
+      - source: traefik-dynamic-config
+        target: /config/dynamic.yaml
     secrets:
       - cloudflare-api-key
       - cloudflare-api-mail

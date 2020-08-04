@@ -48,7 +48,7 @@ providers:
     exposedByDefault: false
     network: ${NET_NAME}
   file:
-    directory: /rules
+    filename: /config/dynamic.yaml
 
 certificatesResolvers:
   dns-cloudflare:
@@ -63,4 +63,3 @@ certificatesResolvers:
           - "1.1.1.1:53"
           - "1.0.0.1:53"
         delayBeforeCheck: 90
-
