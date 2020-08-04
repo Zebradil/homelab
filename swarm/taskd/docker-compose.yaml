@@ -1,4 +1,4 @@
-version: '3.7'
+version: '3.8'
 
 networks:
   proxy:
@@ -21,6 +21,8 @@ services:
       - "CERT_LOCALITY=${TASKD_LOCALITY:?}"
       - "CERT_ORGANIZATION=${TASKD_ORGANIZATION:?}"
       - "CERT_STATE=${TASKD_STATE:?}"
+    ports:
+      - 53589:53589
     deploy:
       mode: replicated
       replicas: 1
@@ -28,13 +30,3 @@ services:
         constraints: [node.role == manager]
       restart_policy:
         condition: on-failure
-      labels:
-        - "traefik.enable=true"
-        ## HTTP Routers
-        - "traefik.tcp.routers.taskd-rtr.entrypoints=taskd"
-        - "traefik.tcp.routers.taskd-rtr.rule=HostSNI(`taskd.${DOMAIN:?}`)"
-        - "traefik.tcp.routers.taskd-rtr.tls=true"
-        - "traefik.tcp.routers.taskd-rtr.tls.passthrough=true"
-        ## HTTP Services
-        - "traefik.tcp.routers.taskd-rtr.service=taskd-svc"
-        - "traefik.tcp.services.taskd-svc.loadbalancer.server.port=53589"
