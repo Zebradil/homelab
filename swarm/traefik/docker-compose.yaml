@@ -104,6 +104,7 @@ services:
       - traefik.http.routers.oauth-rtr.rule=Host(`oauth.${DOMAIN:?}`)
       - traefik.http.routers.oauth-rtr.tls=true
       - traefik.http.routers.oauth-rtr.tls.certresolver=dns-cloudflare
+      - traefik.http.routers.oauth-rtr.tls.options=intermediate@file
         ## Middlewares
       - traefik.http.routers.oauth-rtr.middlewares=chain-oauth@file
         ## HTTP Services

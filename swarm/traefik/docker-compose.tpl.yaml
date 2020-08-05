@@ -65,6 +65,7 @@ services:
         - "traefik.http.routers.traefik-rtr.rule=Host(`traefik.${DOMAIN:?}`)"
         - "traefik.http.routers.traefik-rtr.tls=true"
         - "traefik.http.routers.traefik-rtr.tls.certresolver=dns-cloudflare"
+        - "traefik.http.routers.traefik-rtr.tls.options=intermediate@file"
           ## Middlewares
         - "traefik.http.routers.traefik-rtr.middlewares=chain-oauth@file"
           ## Services - API
@@ -104,6 +105,7 @@ services:
         - "traefik.http.routers.oauth-rtr.rule=Host(`oauth.${DOMAIN:?}`)"
         - "traefik.http.routers.oauth-rtr.tls=true"
         - "traefik.http.routers.oauth-rtr.tls.certresolver=dns-cloudflare"
+        - "traefik.http.routers.oauth-rtr.tls.options=intermediate@file"
         ## Middlewares
         - "traefik.http.routers.oauth-rtr.middlewares=chain-oauth@file"
         ## HTTP Services

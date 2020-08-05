@@ -30,12 +30,14 @@ services:
         - "traefik.http.routers.grocy-rtr.rule=Host(`grocy.${DOMAIN:?}`)"
         - "traefik.http.routers.grocy-rtr.tls=true"
         - "traefik.http.routers.grocy-rtr.tls.certresolver=dns-cloudflare"
+        - "traefik.http.routers.grocy-rtr.tls.options=intermediate@file"
         ## API
         - "traefik.http.routers.grocy-api-rtr.priority=10"
         - "traefik.http.routers.grocy-api-rtr.entrypoints=https"
         - "traefik.http.routers.grocy-api-rtr.rule=Host(`grocy.${DOMAIN:?}`) && PathPrefix(`/api`)"
         - "traefik.http.routers.grocy-api-rtr.tls=true"
         - "traefik.http.routers.grocy-api-rtr.tls.certresolver=dns-cloudflare"
+        - "traefik.http.routers.grocy-api-rtr.tls.options=intermediate@file"
         ## Middlewares
         - "traefik.http.routers.grocy-rtr.middlewares=chain-oauth@file"
         ## HTTP Services

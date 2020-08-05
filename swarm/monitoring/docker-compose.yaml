@@ -73,6 +73,7 @@ services:
         - "traefik.http.routers.cadvisor-rtr.rule=Host(`cadvisor.${DOMAIN:?}`)"
         - "traefik.http.routers.cadvisor-rtr.tls=true"
         - "traefik.http.routers.cadvisor-rtr.tls.certresolver=dns-cloudflare"
+        - "traefik.http.routers.cadvisor-rtr.tls.options=intermediate@file"
         ## Middlewares
         - "traefik.http.routers.cadvisor-rtr.middlewares=chain-oauth@file"
         ## HTTP Services
@@ -117,6 +118,7 @@ services:
         - "traefik.http.routers.grafana-rtr.rule=Host(`grafana.${DOMAIN:?}`)"
         - "traefik.http.routers.grafana-rtr.tls=true"
         - "traefik.http.routers.grafana-rtr.tls.certresolver=dns-cloudflare"
+        - "traefik.http.routers.grafana-rtr.tls.options=intermediate@file"
         ## Middlewares
         - "traefik.http.routers.grafana-rtr.middlewares=chain-oauth@file"
         ## HTTP Services
@@ -152,6 +154,7 @@ services:
         - "traefik.http.routers.alertmanager-rtr.rule=Host(`alertmanager.${DOMAIN:?}`)"
         - "traefik.http.routers.alertmanager-rtr.tls=true"
         - "traefik.http.routers.alertmanager-rtr.tls.certresolver=dns-cloudflare"
+        - "traefik.http.routers.alertmanager-rtr.tls.options=intermediate@file"
         ## Middlewares
         - "traefik.http.routers.alertmanager-rtr.middlewares=chain-oauth@file"
         ## HTTP Services
@@ -197,6 +200,7 @@ services:
         - "traefik.http.routers.karma-rtr.rule=Host(`karma.${DOMAIN:?}`)"
         - "traefik.http.routers.karma-rtr.tls=true"
         - "traefik.http.routers.karma-rtr.tls.certresolver=dns-cloudflare"
+        - "traefik.http.routers.karma-rtr.tls.options=intermediate@file"
         ## Middlewares
         - "traefik.http.routers.karma-rtr.middlewares=chain-oauth@file"
         ## HTTP Services
@@ -264,6 +268,7 @@ services:
         - "traefik.http.routers.prometheus-rtr.rule=Host(`prometheus.${DOMAIN:?}`)"
         - "traefik.http.routers.prometheus-rtr.tls=true"
         - "traefik.http.routers.prometheus-rtr.tls.certresolver=dns-cloudflare"
+        - "traefik.http.routers.prometheus-rtr.tls.options=intermediate@file"
         ## Middlewares
         - "traefik.http.routers.prometheus-rtr.middlewares=chain-oauth@file"
         ## HTTP Services

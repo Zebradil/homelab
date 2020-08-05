@@ -31,6 +31,7 @@ services:
         - "traefik.http.routers.commento-rtr.rule=Host(`commento.${DOMAIN:?}`)"
         - "traefik.http.routers.commento-rtr.tls=true"
         - "traefik.http.routers.commento-rtr.tls.certresolver=dns-cloudflare"
+        - "traefik.http.routers.commento-rtr.tls.options=intermediate@file"
         ## Middlewares
         - "traefik.http.routers.commento-rtr.middlewares=chain-no-auth@file"
         ## HTTP Services
