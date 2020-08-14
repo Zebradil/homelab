@@ -1,4 +1,4 @@
-version: "3.8"
+version: '3.8'
 
 networks:
   proxy:
@@ -65,6 +65,7 @@ services:
       - traefik.http.routers.traefik-rtr.rule=Host(`traefik.${DOMAIN:?}`)
       - traefik.http.routers.traefik-rtr.tls=true
       - traefik.http.routers.traefik-rtr.tls.certresolver=dns-cloudflare
+      - traefik.http.routers.traefik-rtr.tls.options=intermediate@file
           ## Middlewares
       - traefik.http.routers.traefik-rtr.middlewares=chain-oauth@file
           ## Services - API
