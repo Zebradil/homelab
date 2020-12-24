@@ -24,7 +24,7 @@ endif
 ## Deploy
 
 up:: ## Deploy ALL THE THINGS!!1
-up:: up-common up-traefik up-heimdall up-portainer up-grocy up-commento up-taskd
+up:: up-common up-traefik up-heimdall up-portainer up-grocy up-commento up-statping up-taskd
 
 up-commento:: ## Deploy commento stack
 up-common:: ## Deploy common stack
@@ -32,6 +32,7 @@ up-grocy:: ## Deploy grocy stack
 up-heimdall:: ## Deploy heimdall stack
 up-monitoring:: ## Deploy monitoring stack
 up-portainer:: ## Deploy portainer stack
+up-statping:: ## Deploy statping stack
 up-taskd:: ## Deploy taskd stack
 up-traefik:: ## Deploy traefik stack
 up-%::
@@ -44,6 +45,7 @@ update-grocy:: ## Update grocy stack
 update-heimdall:: ## Update heimdall stack
 update-monitoring:: ## Update monitoring stack
 update-portainer:: ## Update portainer stack
+update-statping:: ## Update statping stack
 update-taskd:: ## Update taskd stack
 update-traefik:: ## Update traefik stack
 update-%::
@@ -52,7 +54,7 @@ update-%::
 ## Destroy
 
 down:: ## Destroy ALL THE THINGS!!1
-down:: down-common down-traefik down-heimdall up-portainer down-grocy down-commento down-taskd
+down:: down-common down-traefik down-heimdall up-portainer down-grocy down-commento down-statping down-taskd
 
 down-commento:: ## Destroy commento stack
 down-common:: ## Destroy common stack
@@ -60,6 +62,7 @@ down-grocy:: ## Destroy grocy stack
 down-heimdall:: ## Destroy heimdall stack
 down-monitoring:: ## Destroy monitoring stack
 down-portainer:: ## Destroy portainer stack
+down-statping:: ## Destroy statping stack
 down-taskd:: ## Destroy taskd stack
 down-traefik:: ## Destroy traefik stack
 down-%::

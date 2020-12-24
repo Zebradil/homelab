@@ -1,0 +1,34 @@
+version: "3.8"
+
+networks:
+  proxy:
+    name: "${NET_NAME:?}"
+    external: true
+
+services:
+  statping:
+    image: statping/statping
+    networks:
+      - proxy
+    volumes:
+      - /var/data/statping:/app
+    environment:
+      - "TZ=${TZ:?}"
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        ## HTTP Routers
+        - "traefik.http.routers.statping-rtr.entrypoints=https"
+        - "traefik.http.routers.statping-rtr.rule=Host(`statping.${DOMAIN:?}`)"
+        - "traefik.http.routers.statping-rtr.tls=true"
+        - "traefik.http.routers.statping-rtr.tls.certresolver=dns-cloudflare"
+        - "traefik.http.routers.statping-rtr.tls.options=intermediate@file"
+        ## HTTP Services
+        - "traefik.http.routers.statping-rtr.service=statping-svc"
+        - "traefik.http.services.statping-svc.loadbalancer.server.port=8080"
