@@ -1,0 +1,41 @@
+version: "3.8"
+
+networks:
+  proxy:
+    name: "${NET_NAME:?}"
+    external: true
+
+services:
+  bitwarden:
+    image: bitwardenrs/server
+    networks:
+      - proxy
+    volumes:
+      - /var/data/bitwardenrs:/data
+    environment:
+      - "IP_HEADER=X-Forwarded-For"
+      - "SIGNUPS_ALLOWED=false"
+      - "DOMAIN=https://bitwarden.${DOMAIN:?}"
+    env_file:
+      - ".env"
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        ## HTTP Routers
+        - "traefik.http.routers.bitwarden-rtr.priority=1"
+        - "traefik.http.routers.bitwarden-rtr.entrypoints=https"
+        - "traefik.http.routers.bitwarden-rtr.rule=Host(`bitwarden.${DOMAIN:?}`)"
+        - "traefik.http.routers.bitwarden-rtr.tls=true"
+        - "traefik.http.routers.bitwarden-rtr.tls.certresolver=dns-cloudflare"
+        - "traefik.http.routers.bitwarden-rtr.tls.options=intermediate@file"
+        ## Middlewares
+        # - "traefik.http.routers.bitwarden-rtr.middlewares=chain-oauth@file"
+        ## HTTP Services
+        - "traefik.http.routers.bitwarden-rtr.service=bitwarden-svc"
+        - "traefik.http.services.bitwarden-svc.loadbalancer.server.port=80"

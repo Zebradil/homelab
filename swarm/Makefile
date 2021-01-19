@@ -26,6 +26,7 @@ endif
 up:: ## Deploy ALL THE THINGS!!1
 up:: \
      up-common \
+     up-bitwarden \
      up-commento \
      up-echoserver \
      up-grocy \
@@ -35,6 +36,7 @@ up:: \
      up-traefik \
 
 
+up-bitwarden:: ## Deploy bitwarden stack
 up-commento:: ## Deploy commento stack
 up-common:: ## Deploy common stack
 up-echoserver:: ## Deploy echoserver stack
@@ -50,6 +52,7 @@ up-%::
 
 ## Update
 
+update-bitwarden:: ## Update bitwarden stack
 update-commento:: ## Update commento stack
 update-echoserver:: ## Update echoserver stack
 update-grocy:: ## Update grocy stack
@@ -66,7 +69,6 @@ update-%::
 
 down:: ## Destroy ALL THE THINGS!!1
 down:: \
-     down-common \
      down-commento \
      down-echoserver \
      down-grocy \
@@ -74,8 +76,10 @@ down:: \
      down-portainer \
      down-statping \
      down-traefik \
+     down-common \
 
 
+down-bitwarden:: ## Destroy bitwarden stack
 down-commento:: ## Destroy commento stack
 down-common:: ## Destroy common stack
 down-echoserver:: ## Destroy echoserver stack
