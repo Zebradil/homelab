@@ -1,0 +1,29 @@
+version: "3.8"
+
+networks:
+  proxy:
+    name: "${NET_NAME:?}"
+    external: true
+
+services:
+  echoserver:
+    image: jmalloc/echo-server
+    networks:
+      - proxy
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        ## HTTP Routers
+        - "traefik.http.routers.echoserver-rtr.priority=1"
+        - "traefik.http.routers.echoserver-rtr.entrypoints=https"
+        - "traefik.http.routers.echoserver-rtr.rule=Host(`echoserver.${DOMAIN:?}`)"
+        - "traefik.http.routers.echoserver-rtr.tls=true"
+        - "traefik.http.routers.echoserver-rtr.tls.certresolver=dns-cloudflare"
+        - "traefik.http.routers.echoserver-rtr.tls.options=intermediate@file"
+        ## HTTP Services
+        - "traefik.http.routers.echoserver-rtr.service=echoserver-svc"
+        - "traefik.http.services.echoserver-svc.loadbalancer.server.port=8080"

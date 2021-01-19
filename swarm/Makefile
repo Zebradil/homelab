@@ -27,6 +27,7 @@ up:: ## Deploy ALL THE THINGS!!1
 up:: \
      up-common \
      up-commento \
+     up-echoserver \
      up-grocy \
      up-heimdall \
      up-portainer \
@@ -36,6 +37,7 @@ up:: \
 
 up-commento:: ## Deploy commento stack
 up-common:: ## Deploy common stack
+up-echoserver:: ## Deploy echoserver stack
 up-grocy:: ## Deploy grocy stack
 up-heimdall:: ## Deploy heimdall stack
 up-monitoring:: ## Deploy monitoring stack
@@ -49,6 +51,7 @@ up-%::
 ## Update
 
 update-commento:: ## Update commento stack
+update-echoserver:: ## Update echoserver stack
 update-grocy:: ## Update grocy stack
 update-heimdall:: ## Update heimdall stack
 update-monitoring:: ## Update monitoring stack
@@ -65,6 +68,7 @@ down:: ## Destroy ALL THE THINGS!!1
 down:: \
      down-common \
      down-commento \
+     down-echoserver \
      down-grocy \
      down-heimdall \
      down-portainer \
@@ -74,6 +78,7 @@ down:: \
 
 down-commento:: ## Destroy commento stack
 down-common:: ## Destroy common stack
+down-echoserver:: ## Destroy echoserver stack
 down-grocy:: ## Destroy grocy stack
 down-heimdall:: ## Destroy heimdall stack
 down-monitoring:: ## Destroy monitoring stack
