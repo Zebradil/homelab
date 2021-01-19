@@ -24,7 +24,16 @@ endif
 ## Deploy
 
 up:: ## Deploy ALL THE THINGS!!1
-up:: up-common up-traefik up-heimdall up-portainer up-grocy up-commento up-statping up-taskd
+up:: \
+     up-common \
+     up-commento \
+     up-grocy \
+     up-heimdall \
+     up-portainer \
+     up-statping \
+     up-taskd \
+     up-traefik \
+
 
 up-commento:: ## Deploy commento stack
 up-common:: ## Deploy common stack
@@ -54,7 +63,16 @@ update-%::
 ## Destroy
 
 down:: ## Destroy ALL THE THINGS!!1
-down:: down-common down-traefik down-heimdall up-portainer down-grocy down-commento down-statping down-taskd
+down:: \
+     down-common \
+     down-commento \
+     down-grocy \
+     down-heimdall \
+     down-portainer \
+     down-statping \
+     down-taskd \
+     down-traefik \
+
 
 down-commento:: ## Destroy commento stack
 down-common:: ## Destroy common stack
@@ -73,4 +91,3 @@ down-%::
 generate-htpasswd:: ## Add new user-pass pair to .htpasswd file
 	@printf "`read -p 'Username: ' username; echo $${username}`:`openssl passwd -apr1`\n" >> .htpasswd
 	@echo Appended new line to .htpasswd
-
