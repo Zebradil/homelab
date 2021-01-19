@@ -31,7 +31,6 @@ up:: \
      up-heimdall \
      up-portainer \
      up-statping \
-     up-taskd \
      up-traefik \
 
 
@@ -70,7 +69,6 @@ down:: \
      down-heimdall \
      down-portainer \
      down-statping \
-     down-taskd \
      down-traefik \
 
 
